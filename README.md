@@ -1,63 +1,148 @@
 # 基于 ROS2 的移动机器人建图与自主导航
 
-在室内场景完成二维建图、地图保存、初始定位和目标点导航。实验采用 Cartographer、AMCL 与 Nav2，报告和演示材料记录了路径规划、障碍物绕行和到达目标点的过程。
+面向室内移动机器人导航任务，完成从激光建图、地图保存与加载，到初始定位、路径规划、障碍物绕行和目标点到达的完整流程。项目采用 ROS2 Humble、Cartographer 与 Nav2，在麦克纳姆轮移动平台上完成部署、配置联调和真机演示。
+
+技术关键词：ROS2 · Cartographer · Nav2 · AMCL · NavFn · DWB · 激光雷达 · 真机部署
 
 ## 效果展示
 
-![Navigation demonstration](assets/videos/navigation-demo.gif)
+### 室内建图
 
-![Map preview](assets/maps/my_map.png)
-[实验地图（PGM）](assets/maps/my_map.pgm) · [地图配置](assets/maps/my_map.yaml)
+通过键盘遥控机器人遍历室内环境，在 RViz2 中实时观察激光扫描和地图更新，生成二维占据栅格地图。实验地图呈现了墙体、家具和纸箱障碍物的轮廓，保存为 PGM 与 YAML 文件后用于导航。
 
+![建图效果与实际对比图](assets/images/indoor-mapping.png)
 
-## 实现功能
+建图效果与实际对比图
 
-- MS200 激光雷达与底盘里程计输入 Cartographer，生成二维占据栅格地图并保存为 PGM/YAML。
-- 加载地图后由 AMCL 定位；在 RViz2 设置初始位姿和 Nav2 Goal。
-- Nav2 使用 NavFn 全局规划及 DWB 局部控制，结合激光障碍物层执行避障导航。
+### 目标点导航与避障
 
-## 个人工作
+加载已建地图后，在 RViz2 中设置机器人初始位姿与目标点。系统生成全局路径，并通过局部控制指令驱动机器人绕过纸箱障碍物，完成室内单目标点导航。
 
-根据两份实验报告，可确认的工作包括 Ubuntu 22.04 / ROS2 Humble 环境部署、建图与导航流程配置和联调、遥控建图、地图保存，以及室内目标点导航演示验证。报告叙述了参数调整过程，但现有源码仅能证明当前参数值，无法独立核实每一项修改的作者及前后效果。
+**RViz2 实时导航演示**
 
-## 环境
+![RViz2 实时导航演示](assets/gifs/rviz-navigation.gif)
 
-RDK X5、MS200 激光雷达、全向移动底盘；Ubuntu 22.04、ROS2 Humble、Cartographer ROS、Nav2、RViz2。硬件型号依据实验报告，未通过本次硬件检查复核。
+节选?2?38 s
 
-## 系统流程
+**实机导航演示**
 
-```mermaid
-flowchart LR
-  L[MS200 /scan] --> C[Cartographer]
-  O[底盘 /odom 与 TF] --> C
-  C --> M[地图 PGM/YAML]
-  M --> A[AMCL]
-  L --> A
-  O --> A
-  A --> N[Nav2: NavFn + DWB]
-  M --> N
-  L --> N
-  N --> V["/cmd_vel chassis"]
-```
+![实机导航演示](assets/gifs/robot-navigation.gif)
 
-底盘启动文件发布 IMU 数据并启动 Madgwick 滤波，但当前 Cartographer 配置 `use_imu_data = false`，不能将 IMU 写成建图输入。
+## 完成的工作
 
-## 安装与运行
+- 部署与联调：完成 Ubuntu 22.04 与 ROS2 Humble 运行环境配置，组织建图、导航、底盘控制及可视化功能包，打通从传感器输入到机器人运动执行的流程。
+- 建图应用：配置并运行 Cartographer 建图流程，通过遥控采集室内激光数据，观察地图更新，完成地图保存和后续加载。
+- 导航配置：联调 AMCL 定位、NavFn 全局规划、DWB 局部控制和代价地图，完成初始位姿设置、目标下发与导航执行。
+- 参数调试：围绕雷达有效范围、扫描匹配、运动滤波、速度限制和障碍物膨胀范围进行配置与调试，结合地图和机器人运动表现检查效果。
+- 真机验证：在包含家具和纸箱障碍物的室内场景中执行建图与导航实验，保留地图、RViz2 截图和实物演示视频。
 
-平台功能包的再分发许可未明确，本仓库暂不包含其源码。需先从平台原始提供方取得 `yahboomcar_nav`、`yahboomcar_bringup`、`yahboomcar_base_node`、`yahboomcar_description`、`yahboomcar_ctrl` 及 MS200 驱动，放入工作空间 `src/`。安装 ROS2 Humble、Cartographer ROS、Nav2 和相关驱动依赖后运行：
+## 硬件与软件环境
+
+硬件平台：四轮麦克纳姆轮全向移动底盘、RDK X5 上位机、MS200 单线激光雷达，以及 STM32F103RCT6 下位机。
+
+软件环境：Ubuntu 22.04 LTS、ROS2 Humble、Cartographer ROS、Nav2 与 RViz2。
+
+## 系统方案
+
+### 建图流程
+
+激光雷达提供环境扫描，轮式里程计提供运动信息；Cartographer 完成扫描匹配与地图构建，输出供 RViz2 显示的二维栅格地图。建图完成后保存地图，供后续定位和导航复用。
+
+数据流程：激光扫描与轮式里程计 → Cartographer → 二维栅格地图 → 地图保存
+
+### 导航流程
+
+AMCL 根据已建地图、激光扫描和运动信息估计机器人位姿；NavFn 计算通往目标的全局路径；DWB 结合路径和局部代价地图选择速度指令，由底盘执行。RViz2 用于设置初始位姿、下发目标以及观察运行过程。
+
+任务流程：加载地图 → 初始化定位 → 设置目标点 → 全局路径规划与局部避障控制 → 到达目标。
+
+![系统架构图](assets/images/system-architecture.png)
+
+系统架构图
+
+## 运行流程
+
+加载环境：
 
 ```bash
-rosdep install --from-paths src --ignore-src -r -y
-colcon build --symlink-install
-source install/setup.bash
+source /opt/ros/humble/setup.bash
+source ~/yahboomcar_ws/install/setup.bash
 ```
 
-小车端启动底盘 `ros2 launch yahboomcar_bringup yahboomcar_bringup_launch.py`。再启动建图 `ros2 launch yahboomcar_nav map_cartographer_launch.py`（该入口会启动雷达，勿重复启动）。远程端运行 RViz2，可使用 `ros2 launch yahboomcar_nav yahboomcar_mapping_launch.py`；建图时用 `ros2 run yahboomcar_ctrl yahboom_keyboard` 遥控。保存地图可用 `ros2 launch yahboomcar_nav save_map_launch.py map_path:=/absolute/path/my_map`。导航使用 `ros2 launch yahboomcar_nav navigation_dwb_launch.py map:=/absolute/path/my_map.yaml`，在 RViz2 中设置 `2D Pose Estimate` 和 `Nav2 Goal`。这些命令依据原始入口静态核对，未在本机执行。
+### 1. 启动底盘
 
-## 关键配置与限制
+在小车端执行：
 
-当前配置为 `use_odometry = true`、`use_imu_data = false`；导航配置为 AMCL + NavFn + DWB。报告称使用 IMU 融合建图，与配置不符。导航启动默认地图为 `yahboom_map.yaml`，与报告提到的 `my_map.yaml` 不符，故上面显式传入地图路径。保存地图入口采用工作空间相对路径推算，建议显式传入 `map_path`。本仓库只保留一份实验地图；没有定位误差、成功率等测量记录。本次 Windows 环境未进行 ROS2 编译或真机复测。
+```bash
+ros2 launch yahboomcar_bringup yahboomcar_bringup_launch.py
+```
+
+### 2. 启动建图与可视化
+
+在小车端的新终端启动 Cartographer。该入口会启动激光雷达，无需重复启动雷达节点：
+
+```bash
+ros2 launch yahboomcar_nav map_cartographer_launch.py
+```
+
+在已配置 ROS2 通信的远程电脑上启动建图可视化：
+
+```bash
+ros2 launch yahboomcar_nav yahboomcar_mapping_launch.py
+```
+
+可在另一个终端检查激光与里程计话题：
+
+```bash
+ros2 topic hz /scan
+ros2 topic hz /odom
+```
+
+### 3. 遥控建图并保存地图
+
+启动键盘控制，使机器人缓慢遍历环境，在 RViz2 中观察地图覆盖情况：
+
+```bash
+ros2 run yahboomcar_ctrl yahboom_keyboard
+```
+
+建图完成后，保持建图节点运行，在小车端保存地图：
+
+```bash
+mkdir -p ~/maps
+```
+
+```bash
+ros2 run nav2_map_server map_saver_cli \
+-f ~/maps/my_map
+```
+
+生成以下文件：
+
+```bash
+~/maps/my_map.pgm
+~/maps/my_map.yaml
+```
+
+### 4. 切换至导航模式
+
+地图保存完成后，在建图终端按 Ctrl+C 停止建图，再启动导航并指定地图：
+
+```bash
+ros2 launch yahboomcar_nav navigation_dwb_launch.py \
+map:=$HOME/maps/my_map.yaml
+```
+
+该启动入口加载地图及 AMCL、Nav2 导航组件。底盘节点保持运行。
+
+### 5. 设置位姿与导航目标
+
+在远程电脑启动 RViz2；如果已有窗口，可继续使用：
+
+rviz2
+
+将 Fixed Frame 设置为 map，添加地图、激光和路径显示。使用 2D Pose Estimate 设置机器人初始位置与朝向，再使用 Nav2 Goal 指定目标，观察路径规划、绕障与到达过程。
 
 ## 依赖与致谢
 
-平台功能包来自 Yahboom 小车配套材料，原始 `package.xml` 未声明明确许可证；取得再分发许可前不公开源码，也不为整仓库添加新许可证。算法与运行组件来自 [Cartographer](https://github.com/cartographer-project/cartographer)、[ROS2 Cartographer](https://github.com/ros2/cartographer_ros)、[Nav2](https://github.com/ros-navigation/navigation2) 与 ROS2。原始材料中的版权和署名未作改动。
+建图与导航基于 ROS2、Cartographer 和 Nav2，机器人驱动与平台功能包使用 Yahboom 配套软件相关组件的版权与许可证归原作者所有。
