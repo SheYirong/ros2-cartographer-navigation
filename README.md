@@ -131,9 +131,7 @@ map:=$HOME/maps/my_map.yaml
 
 ### 5. 设置位姿与导航目标
 
-在远程电脑启动 RViz2；如果已有窗口，可继续使用：
-
-rviz2
+在远程电脑启动 RViz2
 
 将 Fixed Frame 设置为 map，添加地图、激光和路径显示。使用 2D Pose Estimate 设置机器人初始位置与朝向，再使用 Nav2 Goal 指定目标，观察路径规划、绕障与到达过程。
 
