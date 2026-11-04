@@ -1,48 +1,50 @@
-﻿# 鍩轰簬 ROS2 鐨勭Щ鍔ㄦ満鍣ㄤ汉寤哄浘涓庤嚜涓诲鑸?
+# 基于 ROS2 的移动机器人建图与自主导航
 
-鍦ㄥ鍐呭満鏅畬鎴愪簩缁村缓鍥俱€佸湴鍥句繚瀛樸€佸垵濮嬪畾浣嶅拰鐩爣鐐瑰鑸€傚疄楠岄噰鐢?Cartographer銆丄MCL 涓?Nav2锛屾姤鍛婂拰婕旂ず鏉愭枡璁板綍浜嗚矾寰勮鍒掋€侀殰纰嶇墿缁曡鍜屽埌杈剧洰鏍囩偣鐨勮繃绋嬨€?
+在室内场景完成二维建图、地图保存、初始定位和目标点导航。实验采用 Cartographer、AMCL 与 Nav2，报告和演示材料记录了路径规划、障碍物绕行和到达目标点的过程。
 
-## 鏁堟灉灞曠ず
+## 效果展示
 
-[瀹為獙鍦板浘锛圥GM锛塢(assets/maps/my_map.pgm) 路 [鍦板浘閰嶇疆](assets/maps/my_map.yaml)
+![Navigation demonstration](assets/videos/navigation-demo.gif)
 
-> 鍘熷婕旂ず瑙嗛绾?36 MB锛屽洜鍏紑鍒嗗彂鎺堟潈涓庣敾闈㈠鏍稿皻鏈畬鎴愶紝鏆傛湭涓婁紶銆傚師濮嬫潗鏂欎繚鐣欏湪鏈湴銆?
+![Map preview](assets/maps/my_map.png)
+[实验地图（PGM）](assets/maps/my_map.pgm) · [地图配置](assets/maps/my_map.yaml)
 
-## 瀹炵幇鍔熻兘
 
-- MS200 婵€鍏夐浄杈句笌搴曠洏閲岀▼璁¤緭鍏?Cartographer锛岀敓鎴愪簩缁村崰鎹爡鏍煎湴鍥惧苟淇濆瓨涓?PGM/YAML銆?
-- 鍔犺浇鍦板浘鍚庣敱 AMCL 瀹氫綅锛涘湪 RViz2 璁剧疆鍒濆浣嶅Э鍜?Nav2 Goal銆?
-- Nav2 浣跨敤 NavFn 鍏ㄥ眬瑙勫垝鍙?DWB 灞€閮ㄦ帶鍒讹紝缁撳悎婵€鍏夐殰纰嶇墿灞傛墽琛岄伩闅滃鑸€?
+## 实现功能
 
-## 涓汉宸ヤ綔
+- MS200 激光雷达与底盘里程计输入 Cartographer，生成二维占据栅格地图并保存为 PGM/YAML。
+- 加载地图后由 AMCL 定位；在 RViz2 设置初始位姿和 Nav2 Goal。
+- Nav2 使用 NavFn 全局规划及 DWB 局部控制，结合激光障碍物层执行避障导航。
 
-鏍规嵁涓や唤瀹為獙鎶ュ憡锛屽彲纭鐨勫伐浣滃寘鎷?Ubuntu 22.04 / ROS2 Humble 鐜閮ㄧ讲銆佸缓鍥句笌瀵艰埅娴佺▼閰嶇疆鍜岃仈璋冦€侀仴鎺у缓鍥俱€佸湴鍥句繚瀛橈紝浠ュ強瀹ゅ唴鐩爣鐐瑰鑸紨绀洪獙璇併€傛姤鍛婂彊杩颁簡鍙傛暟璋冩暣杩囩▼锛屼絾鐜版湁婧愮爜浠呰兘璇佹槑褰撳墠鍙傛暟鍊硷紝鏃犳硶鐙珛鏍稿疄姣忎竴椤逛慨鏀圭殑浣滆€呭強鍓嶅悗鏁堟灉銆?
+## 个人工作
 
-## 鐜
+根据两份实验报告，可确认的工作包括 Ubuntu 22.04 / ROS2 Humble 环境部署、建图与导航流程配置和联调、遥控建图、地图保存，以及室内目标点导航演示验证。报告叙述了参数调整过程，但现有源码仅能证明当前参数值，无法独立核实每一项修改的作者及前后效果。
 
-RDK X5銆丮S200 婵€鍏夐浄杈俱€佸叏鍚戠Щ鍔ㄥ簳鐩橈紱Ubuntu 22.04銆丷OS2 Humble銆丆artographer ROS銆丯av2銆丷Viz2銆傜‖浠跺瀷鍙蜂緷鎹疄楠屾姤鍛婏紝鏈€氳繃鏈纭欢妫€鏌ュ鏍搞€?
+## 环境
 
-## 绯荤粺娴佺▼
+RDK X5、MS200 激光雷达、全向移动底盘；Ubuntu 22.04、ROS2 Humble、Cartographer ROS、Nav2、RViz2。硬件型号依据实验报告，未通过本次硬件检查复核。
+
+## 系统流程
 
 ```mermaid
 flowchart LR
   L[MS200 /scan] --> C[Cartographer]
-  O[搴曠洏 /odom 涓?TF] --> C
-  C --> M[鍦板浘 PGM/YAML]
+  O[底盘 /odom 与 TF] --> C
+  C --> M[地图 PGM/YAML]
   M --> A[AMCL]
   L --> A
   O --> A
   A --> N[Nav2: NavFn + DWB]
   M --> N
   L --> N
-  N --> V[/cmd_vel 搴曠洏]
+  N --> V["/cmd_vel chassis"]
 ```
 
-搴曠洏鍚姩鏂囦欢鍙戝竷 IMU 鏁版嵁骞跺惎鍔?Madgwick 婊ゆ尝锛屼絾褰撳墠 Cartographer 閰嶇疆 `use_imu_data = false`锛屼笉鑳藉皢 IMU 鍐欐垚寤哄浘杈撳叆銆?
+底盘启动文件发布 IMU 数据并启动 Madgwick 滤波，但当前 Cartographer 配置 `use_imu_data = false`，不能将 IMU 写成建图输入。
 
-## 瀹夎涓庤繍琛?
+## 安装与运行
 
-骞冲彴鍔熻兘鍖呯殑鍐嶅垎鍙戣鍙湭鏄庣‘锛屾湰浠撳簱鏆備笉鍖呭惈鍏舵簮鐮併€傞渶鍏堜粠骞冲彴鍘熷鎻愪緵鏂瑰彇寰?`yahboomcar_nav`銆乣yahboomcar_bringup`銆乣yahboomcar_base_node`銆乣yahboomcar_description`銆乣yahboomcar_ctrl` 鍙?MS200 椹卞姩锛屾斁鍏ュ伐浣滅┖闂?`src/`銆傚畨瑁?ROS2 Humble銆丆artographer ROS銆丯av2 鍜岀浉鍏抽┍鍔ㄤ緷璧栧悗杩愯锛?
+平台功能包的再分发许可未明确，本仓库暂不包含其源码。需先从平台原始提供方取得 `yahboomcar_nav`、`yahboomcar_bringup`、`yahboomcar_base_node`、`yahboomcar_description`、`yahboomcar_ctrl` 及 MS200 驱动，放入工作空间 `src/`。安装 ROS2 Humble、Cartographer ROS、Nav2 和相关驱动依赖后运行：
 
 ```bash
 rosdep install --from-paths src --ignore-src -r -y
@@ -50,13 +52,12 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-灏忚溅绔惎鍔ㄥ簳鐩?`ros2 launch yahboomcar_bringup yahboomcar_bringup_launch.py`銆傚啀鍚姩寤哄浘 `ros2 launch yahboomcar_nav map_cartographer_launch.py`锛堣鍏ュ彛浼氬惎鍔ㄩ浄杈撅紝鍕块噸澶嶅惎鍔級銆傝繙绋嬬杩愯 RViz2锛屽彲浣跨敤 `ros2 launch yahboomcar_nav yahboomcar_mapping_launch.py`锛涘缓鍥炬椂鐢?`ros2 run yahboomcar_ctrl yahboom_keyboard` 閬ユ帶銆備繚瀛樺湴鍥惧彲鐢?`ros2 launch yahboomcar_nav save_map_launch.py map_path:=/absolute/path/my_map`銆傚鑸娇鐢?`ros2 launch yahboomcar_nav navigation_dwb_launch.py map:=/absolute/path/my_map.yaml`锛屽湪 RViz2 涓缃?`2D Pose Estimate` 鍜?`Nav2 Goal`銆傝繖浜涘懡浠や緷鎹師濮嬪叆鍙ｉ潤鎬佹牳瀵癸紝鏈湪鏈満鎵ц銆?
+小车端启动底盘 `ros2 launch yahboomcar_bringup yahboomcar_bringup_launch.py`。再启动建图 `ros2 launch yahboomcar_nav map_cartographer_launch.py`（该入口会启动雷达，勿重复启动）。远程端运行 RViz2，可使用 `ros2 launch yahboomcar_nav yahboomcar_mapping_launch.py`；建图时用 `ros2 run yahboomcar_ctrl yahboom_keyboard` 遥控。保存地图可用 `ros2 launch yahboomcar_nav save_map_launch.py map_path:=/absolute/path/my_map`。导航使用 `ros2 launch yahboomcar_nav navigation_dwb_launch.py map:=/absolute/path/my_map.yaml`，在 RViz2 中设置 `2D Pose Estimate` 和 `Nav2 Goal`。这些命令依据原始入口静态核对，未在本机执行。
 
-## 鍏抽敭閰嶇疆涓庨檺鍒?
+## 关键配置与限制
 
-褰撳墠閰嶇疆涓?`use_odometry = true`銆乣use_imu_data = false`锛涘鑸厤缃负 AMCL + NavFn + DWB銆傛姤鍛婄О浣跨敤 IMU 铻嶅悎寤哄浘锛屼笌閰嶇疆涓嶇銆傚鑸惎鍔ㄩ粯璁ゅ湴鍥句负 `yahboom_map.yaml`锛屼笌鎶ュ憡鎻愬埌鐨?`my_map.yaml` 涓嶇锛屾晠涓婇潰鏄惧紡浼犲叆鍦板浘璺緞銆備繚瀛樺湴鍥惧叆鍙ｉ噰鐢ㄥ伐浣滅┖闂寸浉瀵硅矾寰勬帹绠楋紝寤鸿鏄惧紡浼犲叆 `map_path`銆傛湰浠撳簱鍙繚鐣欎竴浠藉疄楠屽湴鍥撅紱娌℃湁瀹氫綅璇樊銆佹垚鍔熺巼绛夋祴閲忚褰曘€傛湰娆?Windows 鐜鏈繘琛?ROS2 缂栬瘧鎴栫湡鏈哄娴嬨€?
+当前配置为 `use_odometry = true`、`use_imu_data = false`；导航配置为 AMCL + NavFn + DWB。报告称使用 IMU 融合建图，与配置不符。导航启动默认地图为 `yahboom_map.yaml`，与报告提到的 `my_map.yaml` 不符，故上面显式传入地图路径。保存地图入口采用工作空间相对路径推算，建议显式传入 `map_path`。本仓库只保留一份实验地图；没有定位误差、成功率等测量记录。本次 Windows 环境未进行 ROS2 编译或真机复测。
 
-## 渚濊禆涓庤嚧璋?
+## 依赖与致谢
 
-骞冲彴鍔熻兘鍖呮潵鑷?Yahboom 灏忚溅閰嶅鏉愭枡锛屽師濮?`package.xml` 鏈０鏄庢槑纭鍙瘉锛涘彇寰楀啀鍒嗗彂璁稿彲鍓嶄笉鍏紑婧愮爜锛屼篃涓嶄负鏁翠粨搴撴坊鍔犳柊璁稿彲璇併€傜畻娉曚笌杩愯缁勪欢鏉ヨ嚜 [Cartographer](https://github.com/cartographer-project/cartographer)銆乕ROS2 Cartographer](https://github.com/ros2/cartographer_ros)銆乕Nav2](https://github.com/ros-navigation/navigation2) 涓?ROS2銆傚師濮嬫潗鏂欎腑鐨勭増鏉冨拰缃插悕鏈綔鏀瑰姩銆?
-
+平台功能包来自 Yahboom 小车配套材料，原始 `package.xml` 未声明明确许可证；取得再分发许可前不公开源码，也不为整仓库添加新许可证。算法与运行组件来自 [Cartographer](https://github.com/cartographer-project/cartographer)、[ROS2 Cartographer](https://github.com/ros2/cartographer_ros)、[Nav2](https://github.com/ros-navigation/navigation2) 与 ROS2。原始材料中的版权和署名未作改动。
